@@ -1,0 +1,33 @@
+# Push-to-Talk Dictation Configuration
+
+# Whisper model size: tiny, base, small, medium, large
+whisper_model: "base"
+
+# Audio settings
+audio:
+  sample_rate: 16000
+  chunk_size: 1024
+  channels: 1
+  device_index: null  # null = default device, or specify device number
+
+# Mouse button settings
+# button: middle (Button.middle), right (Button.right), left (Button.left)
+input:
+  trigger_button: "middle"
+  
+# X11 Injection settings
+injection:
+  # delay: milliseconds to wait between key presses (helps with input lag)
+  delay_ms: 50
+
+# Window management
+window:
+  # Persist the selected window across runs
+  persist_selection: true
+  # Remember window by WM_NAME or WM_CLASS
+  remember_by: "WM_NAME"
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  file: "~/.local/share/push-to-talk-dict/dictation.log"

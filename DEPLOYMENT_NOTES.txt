@@ -1,0 +1,259 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║          PUSH-TO-TALK DICTATION DEPLOYMENT & USAGE GUIDE                  ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+PROJECT LOCATION
+================
+/home/ray/Repos/github.com/rayct/push-to-talk-dictation/
+
+REQUIREMENTS
+============
+- Linux Mint (or other X11-based Linux)
+- Python 3.8+
+- Microphone/audio input device
+- 500MB+ free space (for Whisper model cache)
+
+QUICK INSTALLATION
+==================
+
+Step 1: Navigate to project
+  $ cd /home/ray/Repos/github.com/rayct/push-to-talk-dictation
+
+Step 2: Run installation script
+  $ ./install.sh
+
+  This will:
+  • Create Python virtual environment
+  • Install all dependencies
+  • Verify system requirements
+  • Create systemd service (optional)
+  • Create wrapper scripts
+
+Step 3: Select target window
+  $ ~/.local/bin/push-to-talk-dict --select-window
+
+Step 4: Start daemon (choose one):
+
+  Option A: Manual (for testing/debugging)
+    $ ~/.local/bin/push-to-talk-dict
+
+  Option B: Systemd service (auto-start on login)
+    $ systemctl --user start push-to-talk-dict.service
+
+USAGE
+=====
+
+Once running:
+1. Focus your target window (WezTerm, terminal, etc.)
+2. Hold the MIDDLE MOUSE BUTTON (wheel click)
+3. Speak clearly into your microphone
+4. Release the mouse button when done
+5. Text will be transcribed and injected into the window
+
+Example with GitHub Copilot CLI:
+  1. Start Copilot CLI in WezTerm
+  2. Hold middle mouse button
+  3. Ask a question naturally: "How do I sort an array in Python?"
+  4. Release button
+  5. Your question appears in the CLI and Copilot responds
+
+CONFIGURATION
+==============
+
+Edit config.yaml to customize:
+
+Whisper Model (speed vs accuracy):
+  whisper_model: "base"
+  Options: tiny (fastest), base, small, medium, large (most accurate)
+
+Audio Settings:
+  audio:
+    sample_rate: 16000
+    chunk_size: 1024
+    channels: 1
+    device_index: null  # Auto-detect, or specify device number
+
+Text Injection Speed:
+  injection:
+    delay_ms: 50  # Increase if text doesn't fully appear
+
+Window Persistence:
+  window:
+    persist_selection: true  # Remember window across runs
+
+Logging:
+  logging:
+    level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+    file: "~/.local/share/push-to-talk-dict/dictation.log"
+
+SYSTEMD SERVICE MANAGEMENT
+==========================
+
+Enable auto-start on login:
+  $ systemctl --user enable push-to-talk-dict.service
+
+Start the service:
+  $ systemctl --user start push-to-talk-dict.service
+
+Stop the service:
+  $ systemctl --user stop push-to-talk-dict.service
+
+Check service status:
+  $ systemctl --user status push-to-talk-dict.service
+
+View service logs (real-time):
+  $ journalctl --user -u push-to-talk-dict.service -f
+
+View service logs (last 50 lines):
+  $ journalctl --user -u push-to-talk-dict.service -n 50
+
+TROUBLESHOOTING
+===============
+
+Problem: "User not in audio group"
+Solution: sudo usermod -aG audio $USER
+          Then logout and log back in
+
+Problem: "xdotool not found"
+Solution: sudo apt install xdotool
+
+Problem: "No microphone detected"
+Solution: Check audio device with: pactl list sources short
+          Update device_index in config.yaml if needed
+
+Problem: "Text not injecting into window"
+Solution: Run: ~/.local/bin/push-to-talk-dict --select-window
+          Make sure WezTerm is in the list and selected
+
+Problem: "DISPLAY not set"
+Solution: Make sure you're running X11, not Wayland
+          Check with: echo $DISPLAY
+
+Problem: "First run is very slow"
+Solution: Whisper model is downloading (~500MB)
+          Subsequent runs use cached model
+
+Problem: "Systemd service not starting"
+Solution: Check logs: journalctl --user -u push-to-talk-dict.service -f
+          Try running manually first to identify issues
+
+HELPFUL COMMANDS
+================
+
+List available windows:
+  $ ~/.local/bin/push-to-talk-dict --list-windows
+
+Pick a new target window:
+  $ ~/.local/bin/push-to-talk-dict --select-window
+
+Check system requirements:
+  $ ./sysinfo_check.py
+
+Run component tests:
+  $ python3 test_components.py
+
+View daemon log file:
+  $ tail -f ~/.local/share/push-to-talk-dict/dictation.log
+
+Check saved window selection:
+  $ cat ~/.local/share/push-to-talk-dict/selected_window.json
+
+PERFORMANCE TIPS
+================
+
+For faster transcription:
+  - Use smaller model: config.yaml -> whisper_model: "tiny"
+  - Takes ~0.5s per 10s of audio
+
+For more accurate transcription:
+  - Use larger model: config.yaml -> whisper_model: "medium"
+  - Takes ~5s per 10s of audio
+
+For faster text input:
+  - Decrease injection delay: config.yaml -> injection.delay_ms: 25
+  - Risk: Some terminals may miss characters
+
+For slower, more reliable text input:
+  - Increase injection delay: config.yaml -> injection.delay_ms: 100
+  - Safe for terminals with slower input handling
+
+COMMON USE CASES
+================
+
+1. Voice commands to GitHub Copilot CLI
+   - Start copilot in WezTerm
+   - Hold middle mouse button, ask question
+   - Release, wait for transcription
+   - Copilot processes and responds
+
+2. Code description dictation
+   - Hold middle button, describe function
+   - Release, text appears for documentation
+
+3. Writing bash commands hands-free
+   - Hold middle button, speak command
+   - Release, command appears in terminal
+
+4. Accessibility enhancement
+   - Hands-free terminal input
+   - Voice-driven development
+
+FILE REFERENCE
+==============
+
+Core Implementation:
+  dictation_daemon.py    - Main daemon coordinator
+  mouse_listener.py      - Mouse button detection
+  audio_capture.py       - Microphone recording
+  transcriber.py         - Whisper transcription
+  x11_injector.py        - Text injection
+  window_manager.py      - Window selection
+
+Setup & Config:
+  install.sh             - Installation script
+  sysinfo_check.py       - System requirements check
+  test_components.py     - Integration tests
+  config.yaml            - Configuration file
+  requirements.txt       - Python dependencies
+
+Documentation:
+  README.md              - Full documentation
+  QUICKSTART.md          - Quick start guide
+  IMPLEMENTATION_SUMMARY.md - Technical overview
+  DEPLOYMENT_NOTES.txt   - This file
+
+GETTING HELP
+============
+
+1. Check the appropriate documentation:
+   - QUICKSTART.md for 5-minute setup
+   - README.md for comprehensive info
+   - IMPLEMENTATION_SUMMARY.md for technical details
+
+2. Run system check:
+   $ ./sysinfo_check.py
+
+3. View logs:
+   $ journalctl --user -u push-to-talk-dict.service -f
+
+4. Test components:
+   $ python3 test_components.py
+
+5. Run daemon in debug mode:
+   $ echo "logging: {level: 'DEBUG'}" >> config.yaml
+   $ ~/.local/bin/push-to-talk-dict
+
+NEXT STEPS
+==========
+
+1. Read QUICKSTART.md (5 minutes)
+2. Run ./install.sh (2-3 minutes including system checks)
+3. Select window: push-to-talk-dict --select-window (1 minute)
+4. Test: Hold middle button, say "hello world", release
+5. Enjoy voice input to WezTerm and Copilot CLI!
+
+═══════════════════════════════════════════════════════════════════════════════
+
+Ready to use! 🎤✨
+
+Questions? See the documentation files in the project directory.

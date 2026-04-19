@@ -11,14 +11,11 @@ Provides mocks and fixtures for:
 
 import pytest
 import logging
-import tempfile
 import json
 import yaml
-import os
 from pathlib import Path
-from unittest.mock import Mock, MagicMock, patch
-from typing import Generator, Optional, Dict, Any
-import sys
+from unittest.mock import MagicMock
+from typing import Dict, Any
 
 
 # Configure logging for tests
@@ -34,11 +31,7 @@ logging.basicConfig(
 
 @pytest.fixture
 def mock_display():
-    """Mock Xlib Display object for testing X11 operations without a real display.
-    
-    Returns a MagicMock that simulates Xlib.display.Display behavior.
-    Allows tests to run in headless environments.
-    """
+    """Mock Xlib Display object for testing X11 operations without a real display."""
     display = MagicMock()
     display.screen().root = MagicMock()
     display.screen().root.warp_pointer = MagicMock()
@@ -49,11 +42,7 @@ def mock_display():
 
 @pytest.fixture
 def mock_window():
-    """Mock Xlib Window object for testing window operations.
-    
-    Returns a MagicMock that simulates Xlib window behavior including
-    window properties, geometry, and event handling.
-    """
+    """Mock Xlib Window object for testing window operations."""
     window = MagicMock()
     window.id = 12345
     window.get_wm_name = MagicMock(return_value="Test Window")
@@ -68,14 +57,7 @@ def mock_window():
 
 @pytest.fixture
 def mock_x11_injector(mock_display, mock_window):
-    """Mock X11Injector for testing text injection without real X11.
-    
-    Simulates the X11Injector class behavior for:
-    - Listing available windows
-    - Injecting text via xdotool
-    - Switching focus to windows
-    - Handling keyboard events
-    """
+    """Mock X11Injector for testing text injection without real X11."""
     injector = MagicMock()
     injector.display = mock_display
     injector.target_window = mock_window
@@ -101,10 +83,7 @@ def mock_x11_injector(mock_display, mock_window):
 
 @pytest.fixture
 def mock_audio_device():
-    """Mock audio device for testing audio operations.
-    
-    Returns a mock that simulates sounddevice device properties.
-    """
+    """Mock audio device for testing audio operations."""
     device = {
         'name': 'Built-in Microphone',
         'index': 0,
@@ -112,23 +91,13 @@ def mock_audio_device():
         'hostapi': 0,
         'channels': 1,
         'samplerate': 16000.0,
-        'latency': 0.020,
-        'default_samplerate': 16000.0,
-        'max_input_channels': 1,
-        'max_output_channels': 0,
     }
     return device
 
 
 @pytest.fixture
 def mock_audio_capture():
-    """Mock AudioCapture for testing recording without real hardware.
-    
-    Provides mock methods for:
-    - Listing available devices
-    - Starting and stopping recording
-    - Getting recorded audio data
-    """
+    """Mock AudioCapture for testing recording without real hardware."""
     capture = MagicMock()
     capture.sample_rate = 16000
     capture.channels = 1
@@ -151,13 +120,7 @@ def mock_audio_capture():
 
 @pytest.fixture
 def mock_transcriber():
-    """Mock WhisperTranscriber for testing transcription without model download.
-    
-    Provides mock methods for:
-    - Loading Whisper model
-    - Transcribing audio
-    - Getting supported models
-    """
+    """Mock WhisperTranscriber for testing transcription without model download."""
     transcriber = MagicMock()
     transcriber.model_name = "base"
     transcriber.model = None
@@ -182,13 +145,7 @@ def mock_transcriber():
 
 @pytest.fixture
 def mock_keyboard():
-    """Mock keyboard module for testing keyboard operations.
-    
-    Provides mock methods for:
-    - Registering hotkeys
-    - Simulating key presses
-    - Handling keyboard events
-    """
+    """Mock keyboard module for testing keyboard operations."""
     keyboard = MagicMock()
     keyboard.add_hotkey = MagicMock(return_value=None)
     keyboard.remove_hotkey = MagicMock(return_value=None)
@@ -201,13 +158,7 @@ def mock_keyboard():
 
 @pytest.fixture
 def mock_input_listener(mock_keyboard):
-    """Mock InputListener for testing keyboard/input detection.
-    
-    Provides mock methods for:
-    - Starting and stopping listeners
-    - Simulating key presses
-    - Handling callbacks
-    """
+    """Mock InputListener for testing keyboard/input detection."""
     listener = MagicMock()
     listener.hotkey = 'ctrl+m'
     listener.on_press = None
@@ -228,10 +179,7 @@ def mock_input_listener(mock_keyboard):
 
 @pytest.fixture
 def test_config_dict() -> Dict[str, Any]:
-    """Test configuration dictionary matching config.yaml structure.
-    
-    Returns default test configuration for all components.
-    """
+    """Test configuration dictionary matching config.yaml structure."""
     return {
         'whisper_model': 'base',
         'audio': {
@@ -256,11 +204,7 @@ def test_config_dict() -> Dict[str, Any]:
 
 @pytest.fixture
 def temp_config_file(tmp_path, test_config_dict) -> Path:
-    """Temporary config file for testing configuration loading.
-    
-    Returns path to a temporary config.yaml file with test values.
-    Clean up is handled automatically by pytest's tmp_path fixture.
-    """
+    """Temporary config file for testing configuration loading."""
     config_file = tmp_path / "config.yaml"
     with open(config_file, 'w') as f:
         yaml.dump(test_config_dict, f)
@@ -269,10 +213,7 @@ def temp_config_file(tmp_path, test_config_dict) -> Path:
 
 @pytest.fixture
 def temp_window_selection(tmp_path) -> Path:
-    """Temporary window selection file for testing persistence.
-    
-    Returns path to a temporary selected_window.json file.
-    """
+    """Temporary window selection file for testing persistence."""
     window_file = tmp_path / "selected_window.json"
     window_data = {
         'window_id': 12345,
@@ -290,20 +231,15 @@ def temp_window_selection(tmp_path) -> Path:
 
 @pytest.fixture
 def sample_audio_data() -> bytes:
-    """Sample audio data for testing transcription and injection.
-    
-    Returns mock audio bytes that can be used in tests without
-    actual audio hardware.
-    """
-    # Create a simple WAV-like header + dummy data
+    """Sample audio data for testing transcription and injection."""
     wav_header = b'RIFF' + b'\x00' * 4 + b'WAVE'
-    fmt_chunk = b'fmt ' + b'\x10\x00\x00\x00'  # PCM format
-    fmt_chunk += b'\x01\x00' + b'\x01\x00'  # 1 channel, 1 sample rate
-    fmt_chunk += b'\x80\x3e\x00\x00'  # 16000 Hz
-    fmt_chunk += b'\x00\x7e\x00\x02'  # Byte rate, block align
-    fmt_chunk += b'\x10\x00'  # Bits per sample
+    fmt_chunk = b'fmt ' + b'\x10\x00\x00\x00'
+    fmt_chunk += b'\x01\x00' + b'\x01\x00'
+    fmt_chunk += b'\x80\x3e\x00\x00'
+    fmt_chunk += b'\x00\x7e\x00\x02'
+    fmt_chunk += b'\x10\x00'
     
-    data_chunk = b'data' + b'\x00\x01\x00\x00'  # 256 bytes of audio
+    data_chunk = b'data' + b'\x00\x01\x00\x00'
     data_chunk += b'\x00' * 256
     
     return wav_header + fmt_chunk + data_chunk
@@ -311,20 +247,13 @@ def sample_audio_data() -> bytes:
 
 @pytest.fixture
 def sample_transcription_text() -> str:
-    """Sample transcribed text for testing injection.
-    
-    Returns realistic transcription output for testing text injection
-    and window focus handling.
-    """
+    """Sample transcribed text for testing injection."""
     return "Hello, this is a test of the push to talk dictation system."
 
 
 @pytest.fixture
 def sample_window_list() -> Dict[int, str]:
-    """Sample list of available windows for testing window selection.
-    
-    Returns a dictionary mapping window IDs to window names.
-    """
+    """Sample list of available windows for testing window selection."""
     return {
         1: "WezTerm",
         2: "Firefox - GitHub",
@@ -340,11 +269,7 @@ def sample_window_list() -> Dict[int, str]:
 
 @pytest.fixture
 def venv_path(tmp_path) -> Path:
-    """Temporary virtual environment path for testing.
-    
-    Returns path to a temporary directory that would contain venv.
-    Does not actually create a venv (too slow for tests).
-    """
+    """Temporary virtual environment path for testing."""
     venv_dir = tmp_path / "venv"
     venv_dir.mkdir()
     (venv_dir / "bin").mkdir()
@@ -354,10 +279,7 @@ def venv_path(tmp_path) -> Path:
 
 @pytest.fixture
 def mock_venv_bin(venv_path) -> Dict[str, Path]:
-    """Mock virtual environment binaries.
-    
-    Returns paths to mock executable files in the venv.
-    """
+    """Mock virtual environment binaries."""
     binaries = {}
     for binary in ['python3', 'pip', 'python']:
         bin_path = venv_path / "bin" / binary
@@ -373,26 +295,18 @@ def mock_venv_bin(venv_path) -> Dict[str, Path]:
 
 @pytest.fixture
 def mock_display_env(monkeypatch):
-    """Mock DISPLAY environment variable for X11 testing.
-    
-    Sets DISPLAY to a mock value for testing without real X11.
-    """
+    """Mock DISPLAY environment variable for X11 testing."""
     monkeypatch.setenv('DISPLAY', ':99')
     return ':99'
 
 
 @pytest.fixture
 def mock_home_dir(tmp_path, monkeypatch):
-    """Mock home directory for testing config/data persistence.
-    
-    Temporarily changes HOME to a temporary directory.
-    Useful for testing file I/O in user config directories.
-    """
+    """Mock home directory for testing config/data persistence."""
     home = tmp_path / "home"
     home.mkdir()
     monkeypatch.setenv('HOME', str(home))
     
-    # Create standard user directories
     (home / ".config").mkdir()
     (home / ".local" / "share").mkdir(parents=True)
     
@@ -406,11 +320,7 @@ def mock_home_dir(tmp_path, monkeypatch):
 @pytest.fixture
 def mock_daemon(mock_audio_capture, mock_transcriber, mock_x11_injector, 
                 mock_input_listener, test_config_dict):
-    """Mock DictationDaemon with all components mocked.
-    
-    Provides a fully mocked daemon for testing the main coordinator
-    without any real system dependencies.
-    """
+    """Mock DictationDaemon with all components mocked."""
     daemon = MagicMock()
     daemon.config = test_config_dict
     daemon.audio_capture = mock_audio_capture
@@ -435,53 +345,17 @@ def mock_daemon(mock_audio_capture, mock_transcriber, mock_x11_injector,
 
 @pytest.fixture
 def caplog_debug(caplog):
-    """Capture logs at DEBUG level for detailed test diagnostics.
-    
-    Sets up logging capture with DEBUG level.
-    """
+    """Capture logs at DEBUG level for detailed test diagnostics."""
     caplog.set_level(logging.DEBUG)
     return caplog
 
 
 @pytest.fixture
 def test_logger() -> logging.Logger:
-    """Logger instance for tests.
-    
-    Returns a configured logger for test modules.
-    """
+    """Logger instance for tests."""
     logger = logging.getLogger('test_module')
     logger.setLevel(logging.DEBUG)
     return logger
-
-
-# ============================================================================
-# Pytest Hooks and Configuration
-# ============================================================================
-
-def pytest_configure(config):
-    """Configure pytest with custom settings."""
-    config.addinivalue_line(
-        "markers", "unit: unit tests"
-    )
-    config.addinivalue_line(
-        "markers", "integration: integration tests"
-    )
-    config.addinivalue_line(
-        "markers", "slow: slow tests"
-    )
-
-
-@pytest.fixture(scope="session")
-def disable_x11_warnings():
-    """Disable X11 import warnings during test session.
-    
-    Prevents warnings about missing X11 libraries when running
-    in headless environments.
-    """
-    import warnings
-    warnings.filterwarnings("ignore", category=ImportWarning)
-    warnings.filterwarnings("ignore", message=".*X11.*")
-    return True
 
 
 # ============================================================================
@@ -490,43 +364,26 @@ def disable_x11_warnings():
 
 @pytest.fixture(autouse=True)
 def cleanup_mocks():
-    """Automatically cleanup mock objects after each test.
-    
-    Ensures no mock state leaks between tests.
-    """
+    """Automatically cleanup mock objects after each test."""
     yield
     # Cleanup happens automatically with fixtures
 
 
 # ============================================================================
-# Utility Fixtures
+# Pytest Hooks and Configuration
 # ============================================================================
 
-@pytest.fixture
-def assert_called_once_with_any_order():
-    """Helper for asserting calls with any argument order.
-    
-    Useful for testing functions that might call methods
-    with arguments in different orders.
-    """
-    def helper(mock_obj, *args, **kwargs):
-        calls = mock_obj.call_args_list
-        expected_call = ((args, kwargs) if kwargs else (args,))
-        for call in calls:
-            if call == expected_call or call[0] == args:
-                return True
-        return False
-    
-    return helper
+def pytest_configure(config):
+    """Configure pytest with custom settings."""
+    config.addinivalue_line("markers", "unit: unit tests")
+    config.addinivalue_line("markers", "integration: integration tests")
+    config.addinivalue_line("markers", "slow: slow tests")
 
 
-@pytest.fixture
-def temp_script_file(tmp_path) -> Path:
-    """Temporary script file for testing script operations.
-    
-    Returns path to a temporary Python script file.
-    """
-    script = tmp_path / "test_script.py"
-    script.write_text("#!/usr/bin/env python3\nprint('test')\n")
-    script.chmod(0o755)
-    return script
+@pytest.fixture(scope="session")
+def disable_x11_warnings():
+    """Disable X11 import warnings during test session."""
+    import warnings
+    warnings.filterwarnings("ignore", category=ImportWarning)
+    warnings.filterwarnings("ignore", message=".*X11.*")
+    return True

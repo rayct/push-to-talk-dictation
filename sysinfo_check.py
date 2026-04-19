@@ -70,14 +70,15 @@ class SystemChecker:
         except Exception as e:
             self.check("Audio device check", False, f"Audio check failed: {e}")
 
-        # User in audio group
+        # User in audio group (warning, not critical)
         try:
             result = subprocess.run(['groups'], capture_output=True, text=True)
             in_audio = 'audio' in result.stdout
             self.check("User in 'audio' group", in_audio,
-                      "User not in audio group. Run: sudo usermod -aG audio $USER (requires logout/login)")
+                      "User not in audio group. Run: sudo usermod -aG audio $USER (requires logout/login)",
+                      warning=True)
         except Exception:
-            self.check("User in 'audio' group", False, "Could not check group membership")
+            self.check("User in 'audio' group", False, "Could not check group membership", warning=True)
 
         # Directory structure
         dirs_ok = True

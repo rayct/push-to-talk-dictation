@@ -11,7 +11,7 @@ import yaml
 from pathlib import Path
 from typing import Optional
 
-from mouse_listener import MouseListener
+from mouse_listener import InputListener
 from audio_capture import AudioCapture
 from transcriber import WhisperTranscriber
 from x11_injector import X11Injector
@@ -34,9 +34,10 @@ class DictationDaemon:
             delay_ms=self.config['injection'].get('delay_ms', 50)
         )
         
-        self.mouse_listener = MouseListener(
-            on_press=self.on_mouse_press,
-            on_release=self.on_mouse_release
+        self.mouse_listener = InputListener(
+            hotkey='ctrl+m',  # Use Ctrl+M as push-to-talk trigger
+            on_press=self.on_trigger_press,
+            on_release=self.on_trigger_release
         )
         
         self.recording = False
@@ -133,7 +134,7 @@ class DictationDaemon:
             sys.exit(1)
         
         try:
-            logger.info("Starting mouse listener... (hold middle mouse button to dictate)")
+            logger.info("Starting input listener... (press Ctrl+M to record)")
             self.mouse_listener.start()
             
             # Keep daemon running
@@ -148,7 +149,7 @@ class DictationDaemon:
         finally:
             self.shutdown()
 
-    def on_mouse_press(self):
+    def on_trigger_press(self):
         """Callback when middle mouse button is pressed."""
         if self.recording:
             logger.debug("Already recording")
@@ -163,7 +164,7 @@ class DictationDaemon:
             logger.error(f"Failed to start recording: {e}")
             self.recording = False
 
-    def on_mouse_release(self):
+    def on_trigger_release(self):
         """Callback when middle mouse button is released."""
         if not self.recording:
             return

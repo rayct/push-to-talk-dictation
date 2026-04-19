@@ -1,4 +1,4 @@
-openai-whisper==20240930
+openai-whisper==20250625
 pynput==1.7.6
 PyAudio==0.2.13
 python-xlib==0.35

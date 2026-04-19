@@ -19,13 +19,13 @@ import mouse_listener
 class TestDaemonFlow:
     """Test daemon initialization and component integration."""
 
-    def test_daemon_initialization(self, mock_audio_device, mock_x11_display):
+    def test_daemon_initialization(self, mock_audio_device, mock_display):
         """Test daemon initializes all components."""
         with patch.object(dictation_daemon.DictationDaemon, '__init__', return_value=None):
             daemon = dictation_daemon.DictationDaemon()
             assert daemon is not None
 
-    def test_daemon_with_all_components(self, mock_audio_device, mock_x11_display):
+    def test_daemon_with_all_components(self, mock_audio_device, mock_display):
         """Test daemon has all required components."""
         components = {
             'audio': audio_capture.AudioCapture,
@@ -43,7 +43,7 @@ class TestDaemonFlow:
                 # Some components may fail in test env, that's ok
                 pass
 
-    def test_daemon_startup_shutdown(self, mock_audio_device, mock_x11_display):
+    def test_daemon_startup_shutdown(self, mock_audio_device, mock_display):
         """Test daemon can start and shutdown gracefully."""
         with patch.object(dictation_daemon.DictationDaemon, '__init__', return_value=None):
             with patch.object(dictation_daemon.DictationDaemon, 'run', return_value=None):
@@ -52,7 +52,7 @@ class TestDaemonFlow:
                     daemon.run()
                     daemon.shutdown()
 
-    def test_daemon_event_flow(self, mock_audio_device, mock_x11_display):
+    def test_daemon_event_flow(self, mock_audio_device, mock_display):
         """Test event flow through daemon components."""
         # Create mock components
         listener = Mock()
@@ -72,7 +72,7 @@ class TestDaemonFlow:
         if on_trigger:
             on_trigger()
 
-    def test_daemon_error_recovery(self, mock_audio_device, mock_x11_display):
+    def test_daemon_error_recovery(self, mock_audio_device, mock_display):
         """Test daemon handles component errors gracefully."""
         with patch.object(audio_capture.AudioCapture, 'start_recording', 
                          side_effect=RuntimeError("Device error")):
@@ -80,14 +80,14 @@ class TestDaemonFlow:
             with pytest.raises(RuntimeError):
                 cap.start_recording()
 
-    def test_daemon_configuration_loading(self, mock_audio_device, mock_x11_display, tmp_path):
+    def test_daemon_configuration_loading(self, mock_audio_device, mock_display, tmp_path):
         """Test daemon can load configuration."""
         config_file = tmp_path / "config.yaml"
         config_file.write_text("audio_device: 0\nhotkey: 'ctrl+m'\n")
         
         assert config_file.exists()
 
-    def test_daemon_state_management(self, mock_audio_device, mock_x11_display):
+    def test_daemon_state_management(self, mock_audio_device, mock_display):
         """Test daemon state transitions."""
         states = ['idle', 'recording', 'processing', 'done']
         
@@ -101,7 +101,7 @@ class TestDaemonFlow:
 class TestDaemonWorkflow:
     """Test complete daemon workflow scenarios."""
 
-    def test_complete_push_to_talk_workflow(self, mock_audio_device, mock_x11_display):
+    def test_complete_push_to_talk_workflow(self, mock_audio_device, mock_display):
         """Test complete push-to-talk workflow."""
         # Setup components
         listener = mouse_listener.MouseListener()
@@ -125,7 +125,7 @@ class TestDaemonWorkflow:
         
         trans.cleanup()
 
-    def test_daemon_with_window_selection(self, mock_audio_device, mock_x11_display):
+    def test_daemon_with_window_selection(self, mock_audio_device, mock_display):
         """Test daemon workflow with window selection."""
         wm = window_manager.WindowManager()
         
@@ -135,7 +135,7 @@ class TestDaemonWorkflow:
         
         assert selected == 'terminal-123'
 
-    def test_daemon_continuous_operation(self, mock_audio_device, mock_x11_display):
+    def test_daemon_continuous_operation(self, mock_audio_device, mock_display):
         """Test daemon can handle multiple cycles."""
         trans = transcriber.WhisperTranscriber()
         

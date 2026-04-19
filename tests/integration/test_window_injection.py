@@ -17,13 +17,13 @@ class TestWindowInjectionWorkflow:
     """Test window selection and text injection workflow."""
 
     @pytest.fixture
-    def setup_injection(self, mock_x11_display):
+    def setup_injection(self, mock_display):
         """Setup window manager and X11 injector."""
         wm = window_manager.WindowManager()
         inj = x11_injector.X11Injector()
         yield wm, inj
 
-    def test_select_window_then_inject(self, mock_x11_display):
+    def test_select_window_then_inject(self, mock_display):
         """Test selecting a window and injecting text."""
         wm = window_manager.WindowManager()
         inj = x11_injector.X11Injector()
@@ -39,7 +39,7 @@ class TestWindowInjectionWorkflow:
                 inj.inject_text('test text')
                 mock_inject.assert_called()
 
-    def test_workflow_with_multiple_windows(self, mock_x11_display):
+    def test_workflow_with_multiple_windows(self, mock_display):
         """Test switching between multiple windows for injection."""
         wm = window_manager.WindowManager()
         inj = x11_injector.X11Injector()
@@ -56,7 +56,7 @@ class TestWindowInjectionWorkflow:
                 
                 assert mock_inject.call_count == 3
 
-    def test_injection_to_specific_window(self, mock_x11_display):
+    def test_injection_to_specific_window(self, mock_display):
         """Test injecting text to a specific window."""
         wm = window_manager.WindowManager()
         inj = x11_injector.X11Injector()
@@ -67,7 +67,7 @@ class TestWindowInjectionWorkflow:
                 inj.inject_text('test message')
                 mock_inject.assert_called_with('test message')
 
-    def test_workflow_error_no_windows_available(self, mock_x11_display):
+    def test_workflow_error_no_windows_available(self, mock_display):
         """Test error handling when no windows are available."""
         inj = x11_injector.X11Injector()
         
@@ -75,7 +75,7 @@ class TestWindowInjectionWorkflow:
             windows = inj.list_windows()
             assert len(windows) == 0
 
-    def test_workflow_error_injection_fails(self, mock_x11_display):
+    def test_workflow_error_injection_fails(self, mock_display):
         """Test error handling when injection fails."""
         inj = x11_injector.X11Injector()
         
@@ -83,7 +83,7 @@ class TestWindowInjectionWorkflow:
             with pytest.raises(RuntimeError):
                 inj.inject_text('test text')
 
-    def test_window_persistence_across_sessions(self, mock_x11_display, tmp_path):
+    def test_window_persistence_across_sessions(self, mock_display, tmp_path):
         """Test window selection is persisted across sessions."""
         # First session
         wm1 = window_manager.WindowManager(config_dir=str(tmp_path))
@@ -95,7 +95,7 @@ class TestWindowInjectionWorkflow:
         
         assert selected == '42'
 
-    def test_workflow_cleanup(self, mock_x11_display):
+    def test_workflow_cleanup(self, mock_display):
         """Test proper cleanup of resources."""
         wm = window_manager.WindowManager()
         inj = x11_injector.X11Injector()
@@ -112,7 +112,7 @@ class TestWindowInjectionWorkflow:
 class TestWindowInjectionPerformance:
     """Test performance of window injection workflow."""
 
-    def test_injection_latency(self, mock_x11_display):
+    def test_injection_latency(self, mock_display):
         """Test that text injection is fast."""
         import time
         inj = x11_injector.X11Injector()
@@ -125,7 +125,7 @@ class TestWindowInjectionPerformance:
         assert elapsed < 0.1  # Should be very fast
         mock_inject.assert_called_once_with('hello world')
 
-    def test_window_listing_performance(self, mock_x11_display):
+    def test_window_listing_performance(self, mock_display):
         """Test that window listing is efficient."""
         import time
         inj = x11_injector.X11Injector()

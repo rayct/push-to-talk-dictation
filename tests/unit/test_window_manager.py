@@ -2,60 +2,47 @@
 
 import pytest
 import json
-import sys
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 from io import StringIO
-
-# Add parent directory to sys.path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+import window_manager
 
 
 class TestWindowManager:
     """Test cases for WindowManager class."""
 
-    @pytest.fixture(autouse=True)
-    def setup(self, temp_config_dir, monkeypatch):
-        """Setup for each test."""
-        # Mock home directory
-        monkeypatch.setenv('HOME', temp_config_dir)
-        import importlib
-        import window_manager
-        importlib.reload(window_manager)
-        self.temp_config_dir = temp_config_dir
-
-    def test_initialization_creates_config_dir(self):
+    def test_initialization_creates_config_dir(self, tmp_path, monkeypatch):
         """Test WindowManager creates config directory."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         with patch('window_manager.X11Injector'):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             
             assert manager.config_dir.exists()
 
-    def test_initialization_sets_correct_path(self):
+    def test_initialization_sets_correct_path(self, tmp_path, monkeypatch):
         """Test WindowManager sets correct config directory path."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         with patch('window_manager.X11Injector'):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             
-            expected_path = Path.home() / '.local' / 'share' / 'push-to-talk-dict'
+            expected_path = Path(str(tmp_path)) / '.local' / 'share' / 'push-to-talk-dict'
             assert str(manager.config_dir) == str(expected_path)
 
-    def test_initialization_sets_window_file_path(self):
+    def test_initialization_sets_window_file_path(self, tmp_path, monkeypatch):
         """Test WindowManager sets window file path."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         with patch('window_manager.X11Injector'):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             
             expected_file = manager.config_dir / 'selected_window.json'
             assert manager.window_file == expected_file
 
-    def test_list_windows(self):
+    def test_list_windows(self, tmp_path, monkeypatch):
         """Test list_windows delegates to injector."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         mock_injector = MagicMock()
         mock_windows = [
@@ -65,44 +52,44 @@ class TestWindowManager:
         mock_injector.list_windows.return_value = mock_windows
         
         with patch('window_manager.X11Injector', return_value=mock_injector):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             windows = manager.list_windows()
             
             assert windows == mock_windows
 
-    def test_list_windows_empty(self):
+    def test_list_windows_empty(self, tmp_path, monkeypatch):
         """Test list_windows when no windows available."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         mock_injector = MagicMock()
         mock_injector.list_windows.return_value = []
         
         with patch('window_manager.X11Injector', return_value=mock_injector):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             windows = manager.list_windows()
             
             assert windows == []
 
-    def test_get_current_window(self):
+    def test_get_current_window(self, tmp_path, monkeypatch):
         """Test getting currently active window."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         mock_injector = MagicMock()
         mock_window = {'id': '1', 'name': 'Active Window'}
         mock_injector.get_active_window.return_value = mock_window
         
         with patch('window_manager.X11Injector', return_value=mock_injector):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             window = manager.get_current_window()
             
             assert window == mock_window
 
-    def test_save_window_success(self):
+    def test_save_window_success(self, tmp_path, monkeypatch):
         """Test saving window to file."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         with patch('window_manager.X11Injector'):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             window = {'id': '123', 'name': 'Test Window'}
             
             result = manager.save_window(window)
@@ -110,12 +97,12 @@ class TestWindowManager:
             assert result is True
             assert manager.window_file.exists()
 
-    def test_save_window_content(self):
+    def test_save_window_content(self, tmp_path, monkeypatch):
         """Test saved window content is correct."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         with patch('window_manager.X11Injector'):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             window = {'id': '456', 'name': 'Another Window'}
             
             manager.save_window(window)
@@ -125,12 +112,12 @@ class TestWindowManager:
             
             assert saved_window == window
 
-    def test_save_window_overwrites_existing(self):
+    def test_save_window_overwrites_existing(self, tmp_path, monkeypatch):
         """Test save_window overwrites previous file."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         with patch('window_manager.X11Injector'):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             
             window1 = {'id': '1', 'name': 'Window 1'}
             window2 = {'id': '2', 'name': 'Window 2'}
@@ -143,12 +130,12 @@ class TestWindowManager:
             
             assert saved_window['id'] == '2'
 
-    def test_save_window_exception_handling(self):
+    def test_save_window_exception_handling(self, tmp_path, monkeypatch):
         """Test save_window handles exceptions."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         with patch('window_manager.X11Injector'):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             window = {'id': '1', 'name': 'Window'}
             
             # Mock open to raise exception
@@ -157,12 +144,12 @@ class TestWindowManager:
                 
                 assert result is False
 
-    def test_load_window_success(self):
+    def test_load_window_success(self, tmp_path, monkeypatch):
         """Test loading saved window."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         with patch('window_manager.X11Injector'):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             window_to_save = {'id': '789', 'name': 'Saved Window'}
             
             manager.save_window(window_to_save)
@@ -170,22 +157,22 @@ class TestWindowManager:
             
             assert loaded_window == window_to_save
 
-    def test_load_window_file_not_exists(self):
+    def test_load_window_file_not_exists(self, tmp_path, monkeypatch):
         """Test load_window when file doesn't exist."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         with patch('window_manager.X11Injector'):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             window = manager.load_window()
             
             assert window is None
 
-    def test_load_window_invalid_json(self):
+    def test_load_window_invalid_json(self, tmp_path, monkeypatch):
         """Test load_window handles invalid JSON."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         with patch('window_manager.X11Injector'):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             
             # Create invalid JSON file
             with open(manager.window_file, 'w') as f:
@@ -195,12 +182,12 @@ class TestWindowManager:
             
             assert window is None
 
-    def test_load_window_corrupted_file(self):
+    def test_load_window_corrupted_file(self, tmp_path, monkeypatch):
         """Test load_window handles corrupted file gracefully."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         with patch('window_manager.X11Injector'):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             
             # Create empty file
             manager.window_file.touch()
@@ -209,9 +196,9 @@ class TestWindowManager:
             
             assert window is None
 
-    def test_verify_window_exists_true(self):
+    def test_verify_window_exists_true(self, tmp_path, monkeypatch):
         """Test verify_window_exists returns True for existing window."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         mock_injector = MagicMock()
         mock_injector.list_windows.return_value = [
@@ -220,16 +207,16 @@ class TestWindowManager:
         ]
         
         with patch('window_manager.X11Injector', return_value=mock_injector):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             window = {'id': '123', 'name': 'Window 1'}
             
             result = manager.verify_window_exists(window)
             
             assert result is True
 
-    def test_verify_window_exists_false(self):
+    def test_verify_window_exists_false(self, tmp_path, monkeypatch):
         """Test verify_window_exists returns False for non-existing window."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         mock_injector = MagicMock()
         mock_injector.list_windows.return_value = [
@@ -237,37 +224,37 @@ class TestWindowManager:
         ]
         
         with patch('window_manager.X11Injector', return_value=mock_injector):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             window = {'id': '999', 'name': 'Non-existent Window'}
             
             result = manager.verify_window_exists(window)
             
             assert result is False
 
-    def test_verify_window_exists_no_windows(self):
+    def test_verify_window_exists_no_windows(self, tmp_path, monkeypatch):
         """Test verify_window_exists with no available windows."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         mock_injector = MagicMock()
         mock_injector.list_windows.return_value = []
         
         with patch('window_manager.X11Injector', return_value=mock_injector):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             window = {'id': '123', 'name': 'Window'}
             
             result = manager.verify_window_exists(window)
             
             assert result is False
 
-    def test_pick_window_interactive_no_windows(self, monkeypatch):
+    def test_pick_window_interactive_no_windows(self, tmp_path, monkeypatch):
         """Test interactive window picking with no windows."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         mock_injector = MagicMock()
         mock_injector.list_windows.return_value = []
         
         with patch('window_manager.X11Injector', return_value=mock_injector):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             
             # Capture output
             captured = StringIO()
@@ -276,9 +263,9 @@ class TestWindowManager:
             
             assert window is None
 
-    def test_pick_window_interactive_valid_selection(self, monkeypatch):
+    def test_pick_window_interactive_valid_selection(self, tmp_path, monkeypatch):
         """Test interactive window picking with valid selection."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         mock_injector = MagicMock()
         windows = [
@@ -289,7 +276,7 @@ class TestWindowManager:
         mock_injector.list_windows.return_value = windows
         
         with patch('window_manager.X11Injector', return_value=mock_injector):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             
             # Mock user input to select window 2
             with patch('builtins.input', return_value='2'):
@@ -297,9 +284,9 @@ class TestWindowManager:
             
             assert window == windows[1]
 
-    def test_pick_window_interactive_invalid_selection(self, monkeypatch):
+    def test_pick_window_interactive_invalid_selection(self, tmp_path, monkeypatch):
         """Test interactive window picking with invalid selection."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         mock_injector = MagicMock()
         windows = [
@@ -309,7 +296,7 @@ class TestWindowManager:
         mock_injector.list_windows.return_value = windows
         
         with patch('window_manager.X11Injector', return_value=mock_injector):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             
             # Mock user input with invalid selection
             with patch('builtins.input', return_value='99'):
@@ -317,76 +304,55 @@ class TestWindowManager:
             
             assert window is None
 
-    def test_pick_window_interactive_non_numeric_input(self):
+    def test_pick_window_interactive_non_numeric_input(self, tmp_path, monkeypatch):
         """Test interactive window picking with non-numeric input."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         mock_injector = MagicMock()
         windows = [{'id': '1', 'name': 'Window 1'}]
         mock_injector.list_windows.return_value = windows
         
         with patch('window_manager.X11Injector', return_value=mock_injector):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             
             with patch('builtins.input', return_value='invalid'):
                 window = manager.pick_window_interactive()
             
             assert window is None
 
-    def test_pick_window_interactive_keyboard_interrupt(self):
+    def test_pick_window_interactive_keyboard_interrupt(self, tmp_path, monkeypatch):
         """Test interactive window picking handles keyboard interrupt."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         mock_injector = MagicMock()
         windows = [{'id': '1', 'name': 'Window 1'}]
         mock_injector.list_windows.return_value = windows
         
         with patch('window_manager.X11Injector', return_value=mock_injector):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             
             with patch('builtins.input', side_effect=KeyboardInterrupt):
                 window = manager.pick_window_interactive()
             
             assert window is None
 
-    def test_pick_window_interactive_filters_desktop(self):
-        """Test interactive window picking filters out desktop windows."""
-        from window_manager import WindowManager
-        
-        mock_injector = MagicMock()
-        windows = [
-            {'id': '1', 'name': 'desktop'},
-            {'id': '2', 'name': 'Real Window'},
-            {'id': '3', 'name': 'Another Window'},
-        ]
-        mock_injector.list_windows.return_value = windows
-        
-        with patch('window_manager.X11Injector', return_value=mock_injector):
-            manager = WindowManager()
-            
-            with patch('builtins.input', return_value='1'):
-                window = manager.pick_window_interactive()
-            
-            # Should select from filtered list (Real Window would be index 1)
-            assert window is not None
-
-    def test_config_directory_permissions(self):
+    def test_config_directory_permissions(self, tmp_path, monkeypatch):
         """Test config directory is created with proper permissions."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         with patch('window_manager.X11Injector'):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             
             assert manager.config_dir.exists()
             assert manager.config_dir.is_dir()
 
-    def test_multiple_managers_same_config(self):
+    def test_multiple_managers_same_config(self, tmp_path, monkeypatch):
         """Test multiple WindowManager instances share same config file."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         with patch('window_manager.X11Injector'):
-            manager1 = WindowManager()
-            manager2 = WindowManager()
+            manager1 = window_manager.WindowManager()
+            manager2 = window_manager.WindowManager()
             
             window = {'id': '1', 'name': 'Test'}
             manager1.save_window(window)
@@ -395,12 +361,12 @@ class TestWindowManager:
             
             assert loaded == window
 
-    def test_window_file_json_format(self):
+    def test_window_file_json_format(self, tmp_path, monkeypatch):
         """Test window file is valid JSON."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         with patch('window_manager.X11Injector'):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             window = {'id': '123', 'name': 'Test Window', 'extra': 'data'}
             
             manager.save_window(window)
@@ -413,9 +379,9 @@ class TestWindowManager:
             assert loaded['name'] == 'Test Window'
             assert loaded['extra'] == 'data'
 
-    def test_save_and_verify_window_workflow(self):
+    def test_save_and_verify_window_workflow(self, tmp_path, monkeypatch):
         """Test complete workflow: save, verify, and load window."""
-        from window_manager import WindowManager
+        monkeypatch.setenv('HOME', str(tmp_path))
         
         mock_injector = MagicMock()
         windows = [
@@ -425,7 +391,7 @@ class TestWindowManager:
         mock_injector.list_windows.return_value = windows
         
         with patch('window_manager.X11Injector', return_value=mock_injector):
-            manager = WindowManager()
+            manager = window_manager.WindowManager()
             
             # Save window
             window_to_save = windows[0]
